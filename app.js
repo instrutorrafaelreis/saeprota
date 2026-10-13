@@ -328,11 +328,22 @@ class SaepApp {
     if (pendingTxt) pendingTxt.innerText = `${total - answeredCount} pendentes`;
   }
 
-  // Formatador de snippets e código no texto
+  // Formatador de snippets e código no texto com escape seguro de HTML
   formatCodeInText(text) {
     if (!text) return '';
-    // Substitui fragmentos entre crases `...` ou seletores e regras CSS por <code class="code-snippet">
-    return text.replace(/`([^`]+)`/g, '<code class="code-snippet">$1</code>');
+    // 1. Escapa tags HTML para que <link>, <a>, <th>, <html>, <img> etc. apareçam como texto legível
+    let safe = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // 2. Transforma fragmentos entre crases `...` em code-snippets
+    safe = safe.replace(/`([^`]+)`/g, '<code class="code-snippet">$1</code>');
+
+    // 3. Destaca tags HTML escapadas (como &lt;link ... /&gt;, &lt;th&gt;, &lt;a&gt;) com estilo de código
+    safe = safe.replace(/(&lt;[a-zA-Z0-9_\-\s"'/=]+&gt;)/g, '<code class="code-snippet">$1</code>');
+
+    return safe;
   }
 
   // -------------------------------------------------------------------
