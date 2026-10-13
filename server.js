@@ -513,15 +513,20 @@ app.post('/api/teacher/simulate-class', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  const ips = getLocalNetworkIPs();
-  console.log(`\n============================================================`);
-  console.log(`🚀 SERVIDOR SAEP ROTA INICIADO COM SUCESSO NA PORTA ${PORT}`);
-  console.log(`   Acesso local no computador do professor: http://localhost:${PORT}`);
-  if (ips.length > 0) {
-    console.log(`   Acesso dos alunos na mesma rede Wi-Fi / Cabo:`);
-    ips.forEach(ip => console.log(`   👉 http://${ip}:${PORT}`));
-  }
-  console.log(`   PIN do Professor: senai123`);
-  console.log(`============================================================\n`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    const ips = getLocalNetworkIPs();
+    console.log(`\n============================================================`);
+    console.log(`🚀 SERVIDOR SAEP ROTA INICIADO COM SUCESSO NA PORTA ${PORT}`);
+    console.log(`   Acesso local no computador do professor: http://localhost:${PORT}`);
+    if (ips.length > 0) {
+      console.log(`   Acesso dos alunos na mesma rede Wi-Fi / Cabo:`);
+      ips.forEach(ip => console.log(`   👉 http://${ip}:${PORT}`));
+    }
+    console.log(`   PIN do Professor: senai123`);
+    console.log(`============================================================\n`);
+  });
+}
+
+module.exports = app;
+
