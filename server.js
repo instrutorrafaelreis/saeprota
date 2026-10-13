@@ -12,11 +12,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-const DATA_DIR = path.join(__dirname, 'data');
+const isVercel = Boolean(process.env.VERCEL);
+const DATA_DIR = isVercel ? '/tmp' : path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'session.json');
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!isVercel && !fs.existsSync(DATA_DIR)) {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('Erro ao criar pasta data:', e.message);
+  }
 }
 
 // Estado inicial da sala / atividade
@@ -80,6 +85,11 @@ function checkAutoUnlockCondition() {
     persistState();
   }
 }
+
+// Rota principal para servir a aplicação HTML
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Endpoint para informações de rede e status da sessão
 app.get('/api/info', (req, res) => {
@@ -513,7 +523,7 @@ app.post('/api/teacher/simulate-class', (req, res) => {
   });
 });
 
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     const ips = getLocalNetworkIPs();
     console.log(`\n============================================================`);
@@ -529,4 +539,5 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 
 module.exports = app;
+
 
