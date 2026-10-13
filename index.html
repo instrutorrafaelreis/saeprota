@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulado SAEP ROTA - Desenvolvimento Web & CSS | SENAI</title>
+  
+  <!-- Fontes do Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js para os Gráficos de Acertos e Erros (Versão Local Offline) -->
+  <script src="chart.umd.min.js"></script>
+  
+  <!-- Canvas Confetti para animação festiva no desbloqueio (Versão Local Offline) -->
+  <script src="confetti.browser.min.js"></script>
+
+  <!-- Estilos da Aplicação -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===================================================================
+       CABEÇALHO DA APLICAÇÃO
+       =================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-area">
+        <span class="brand-badge">SAEP ROTA</span>
+        <div class="brand-title">
+          <h1>Desenvolvimento Web &amp; CSS</h1>
+          <p>Metodologia SENAI de Educação Profissional (MSEP)</p>
+        </div>
+      </div>
+
+      <div class="header-status-area">
+        <div class="status-badge" id="netStatusBadge" title="Status de conexão">
+          <span class="status-indicator" id="netStatusDot"></span>
+          <span id="netStatusText">Conectando...</span>
+        </div>
+
+        <button class="btn-header-mode" id="btnToggleRole" onclick="app.toggleRoleModal()">
+          <span>🔑</span>
+          <span id="roleButtonLabel">Área do Instrutor</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================
+       CONTEÚDO PRINCIPAL (VIEWS DINÂMICAS)
+       =================================================================== -->
+  <main class="main-wrapper">
+
+    <!-- ---------------------------------------------------------------
+         1. TELA DE IDENTIFICAÇÃO (LOGIN DO ALUNO)
+         --------------------------------------------------------------- -->
+    <section id="view-auth" class="view-section active">
+      <div class="app-card auth-container">
+        <div class="auth-header">
+          <div class="auth-icon">📝</div>
+          <h2>Avaliação Formativa Online</h2>
+          <p>Preencha os seus dados para iniciar a avaliação de 20 itens sobre estilização com CSS.</p>
+        </div>
+
+        <form id="studentLoginForm" onsubmit="app.handleStudentLogin(event)">
+          <div class="form-group">
+            <label for="studentNameInput">Nome Completo do Estudante:</label>
+            <input type="text" id="studentNameInput" class="form-input" placeholder="Ex: Lucas Ferreira" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="studentTurmaInput">Turma / Unidade SENAI:</label>
+            <input type="text" id="studentTurmaInput" class="form-input" placeholder="Ex: Turma A - Téc. Informática" value="Turma A - Téc. Desenvolvimento">
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnStartQuiz">
+            <span>Iniciar Avaliação (20 Itens)</span>
+            <span>➔</span>
+          </button>
+        </form>
+
+        <div class="network-callout" id="networkInfoBox">
+          <span style="font-size: 1.2rem;">ℹ️</span>
+          <div>
+            <strong>Regra da Avaliação:</strong> O gráfico de desempenho e a área com as justificativas comentadas de cada questão só serão liberados após a conclusão de todos os estudantes ou autorização do instrutor.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         2. TELA DA AVALIAÇÃO (ALUNO RESPONDENDO OS 20 ITENS)
+         --------------------------------------------------------------- -->
+    <section id="view-quiz" class="view-section">
+      <!-- Barra superior do exame -->
+      <div class="quiz-top-bar">
+        <div class="student-info-pill">
+          👤 <span id="quizStudentName">Aluno</span> (<span id="quizStudentTurma">Turma</span>)
+        </div>
+        <div class="timer-pill" id="quizTimer">
+          ⏱️ Tempo: 00:00
+        </div>
+      </div>
+
+      <!-- Barra de progresso -->
+      <div class="progress-container">
+        <div class="progress-labels">
+          <span id="quizProgressText">Respondidas: 0 de 20 (0%)</span>
+          <span id="quizPendingText">20 pendentes</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="quizProgressBar"></div>
+        </div>
+      </div>
+
+      <!-- Navegador Rápido de Questões (1 a 20) -->
+      <div class="questions-nav-grid" id="questionsNavGrid">
+        <!-- Gerado via JavaScript -->
+      </div>
+
+      <!-- Card Central da Questão Atual -->
+      <div class="app-card" id="questionCard">
+        <div class="question-header">
+          <span class="question-badge" id="qBadge">ITEM 1 DE 20</span>
+          <span class="question-topic" id="qTopic">Tópico: Flexbox</span>
+        </div>
+
+        <div class="question-context" id="qContext">
+          <!-- Contexto carregado dinamicamente -->
+        </div>
+
+        <div class="question-command" id="qCommand">
+          <!-- Comando carregado dinamicamente -->
+        </div>
+
+        <div class="options-list" id="qOptionsList">
+          <!-- Alternativas a, b, c, d, e -->
+        </div>
+
+        <div class="quiz-actions">
+          <button class="btn-secondary" id="btnPrevQ" onclick="app.prevQuestion()">
+            ← Questão Anterior
+          </button>
+
+          <button class="btn-secondary" id="btnReviewMark" onclick="app.toggleFlagCurrent()">
+            🏷️ <span id="lblFlagBtn">Marcar para Revisar</span>
+          </button>
+
+          <button class="btn-secondary" id="btnNextQ" onclick="app.nextQuestion()">
+            Próxima Questão →
+          </button>
+
+          <button class="btn-finish" id="btnSubmitQuiz" onclick="app.openSubmitConfirmModal()">
+            ✓ Finalizar e Entregar Avaliação
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         3. TELA DE ESPERA (AGUARDANDO TODOS OS ALUNOS TERMINAREM)
+         --------------------------------------------------------------- -->
+    <section id="view-waiting" class="view-section">
+      <div class="app-card waiting-container">
+        <div class="radar-loader">
+          <div class="radar-circle"></div>
+          <div class="radar-sweep"></div>
+        </div>
+
+        <h2 class="waiting-title">Avaliação Entregue com Sucesso!</h2>
+        <p class="waiting-desc">
+          Obrigado, <strong id="waitStudentName">Aluno</strong>! As suas respostas foram registradas no sistema.
+        </p>
+
+        <div class="waiting-progress-card">
+          <div class="waiting-numbers">
+            <div class="waiting-stat">
+              <span class="stat-value" id="waitCountDone">0</span>
+              <span class="stat-label">Concluíram</span>
+            </div>
+            <div class="waiting-stat">
+              <span class="stat-value" id="waitCountTotal">0</span>
+              <span class="stat-label">Total Turma</span>
+            </div>
+            <div class="waiting-stat">
+              <span class="stat-value" id="waitCountPercent">0%</span>
+              <span class="stat-label">Progresso</span>
+            </div>
+          </div>
+
+          <div class="progress-track" style="height: 12px; margin-bottom: 1rem;">
+            <div class="progress-fill" id="waitClassProgressBar" style="width: 0%;"></div>
+          </div>
+
+          <div class="waiting-notice">
+            <span>🔒</span>
+            <span>A área de <strong>Gráficos de Desempenho</strong> e <strong>Explicações Comentadas</strong> será liberada automaticamente assim que todos terminarem.</span>
+          </div>
+
+          <!-- Liberação por Código/Chave do Professor -->
+          <div style="margin-top: 1.5rem; padding: 1rem; background: #ffffff; border: 1.5px dashed var(--accent); border-radius: 8px; text-align: center;">
+            <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 0.4rem;">
+              🔑 Chave de Liberação da Turma
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Se o professor já anunciou a chave em sala após todos terminarem, digite-a abaixo para desbloquear imediatamente:
+            </p>
+            <div style="display: flex; gap: 0.5rem; justify-content: center; max-width: 320px; margin: 0 auto;">
+              <input type="text" id="inputStudentUnlockCode" class="form-input" placeholder="Ex: SAEP2026" style="text-align: center; font-weight: 700; text-transform: uppercase;">
+              <button class="btn-primary" style="width: auto; padding: 0.6rem 1rem;" onclick="app.submitStudentUnlockCode()">
+                Desbloquear
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ferramenta de Simulação para Teste Ágil do Professor -->
+        <div class="simulation-box" id="waitSimulationNotice">
+          <strong>Modo de Demonstração / Teste:</strong><br>
+          Deseja visualizar os gráficos e as explicações agora mesmo para testar?
+          <br>
+          <button class="btn-simulate-unlock" onclick="app.simulateEveryoneFinished()">
+            🔓 Liberar Explicações e Gráficos Agora (Modo Teste)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         4. TELA DE RESULTADOS, GRÁFICOS E EXPLICAÇÕES (DESBLOQUEADA)
+         --------------------------------------------------------------- -->
+    <section id="view-results" class="view-section">
+      <!-- Banner com a nota do estudante -->
+      <div class="results-banner">
+        <div class="banner-left">
+          <span style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.2); padding: 0.2rem 0.6rem; border-radius: 4px;">
+            Feedback Desbloqueado
+          </span>
+          <h2 id="resStudentTitle">Resultado de Aluno</h2>
+          <p id="resStudentSubtitle">Avaliação de 20 Itens concluída com sucesso.</p>
+        </div>
+
+        <div class="score-badge-circle">
+          <span class="score-num" id="resScoreNum">--</span>
+          <span class="score-sub">Acertos (de 20)</span>
+        </div>
+      </div>
+
+      <!-- Indicadores Rápidos -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon hits">✓</div>
+          <div class="metric-details">
+            <div class="val" id="resTotalHits" style="color: var(--success);">--</div>
+            <div class="lbl">Questões Corretas</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon misses">✕</div>
+          <div class="metric-details">
+            <div class="val" id="resTotalMisses" style="color: var(--danger);">--</div>
+            <div class="lbl">Questões Incorretas</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon percent">%</div>
+          <div class="metric-details">
+            <div class="val" id="resPercentage" style="color: var(--primary);">--%</div>
+            <div class="lbl">Taxa de Aproveitamento</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: #f1f5f9; color: var(--text-main);">📊</div>
+          <div class="metric-details">
+            <div class="val" id="resMSEPLevel" style="font-size: 1.15rem; color: var(--text-main);">Adequado</div>
+            <div class="lbl">Conceito MSEP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS DE ACERTOS E ERROS (CHART.JS) -->
+      <div class="charts-section">
+        <div class="chart-card">
+          <h3>📊 Gráfico de Acertos e Erros</h3>
+          <div class="chart-canvas-container">
+            <canvas id="chartHitsMisses"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>🎯 Desempenho por Tópico de CSS</h3>
+          <div class="chart-canvas-container">
+            <canvas id="chartTopics"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÁREA DE EXPLICAÇÃO & GABARITO COMENTADO -->
+      <div class="app-card" style="padding: 2rem;">
+        <div class="explanations-header">
+          <div>
+            <h3>💡 Área de Explicações e Gabarito Comentado</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Consulte a fundamentação técnica e as hipóteses pedagógicas de erro para cada questão.
+            </p>
+          </div>
+
+          <!-- Filtro de visualização -->
+          <div class="filter-pills">
+            <button class="filter-btn active" id="filterAll" onclick="app.filterExplanations('all')">
+              Todas (20)
+            </button>
+            <button class="filter-btn" id="filterWrongs" onclick="app.filterExplanations('wrongs')">
+              ❌ Apenas Erros
+            </button>
+            <button class="filter-btn" id="filterHits" onclick="app.filterExplanations('hits')">
+              ✅ Apenas Acertos
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista Dinâmica com as Justificativas dos 20 Itens -->
+        <div id="explanationsContainer">
+          <!-- Preenchido via app.js -->
+        </div>
+
+        <!-- Ações no fim do resultado -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+          <button class="btn-secondary" onclick="window.print()">
+            🖨️ Imprimir / Salvar Relatório em PDF
+          </button>
+          <button class="btn-primary" style="width: auto;" onclick="app.restartStudentQuiz()">
+            🔄 Fazer Nova Tentativa
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------
+         5. TELA DO INSTRUTOR / PROFESSOR (PAINEL DE CONTROLE DA TURMA)
+         --------------------------------------------------------------- -->
+    <section id="view-teacher" class="view-section">
+      <div class="app-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="color: var(--primary); font-size: 1.6rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>👨‍🏫</span> Painel de Controle do Instrutor
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
+              Monitore a turma em tempo real, libere o gabarito e analise a taxa de acertos e erros.
+            </p>
+          </div>
+
+          <button class="btn-secondary" onclick="app.switchView('view-auth')">
+            ← Voltar para Visão do Aluno
+          </button>
+        </div>
+
+        <!-- Barra Master de Liberação do Gabarito -->
+        <div class="teacher-control-bar">
+          <div>
+            <strong style="display: block; font-size: 1.05rem; color: var(--text-main);">Controle de Liberação do Gabarito:</strong>
+            <span id="teacherUnlockStatusLabel" style="font-size: 0.9rem; color: var(--text-muted);">
+              Status atual: <strong>Bloqueado</strong> (Alunos aguardam término de todos)
+            </span>
+          </div>
+
+          <div class="teacher-actions-group">
+            <button class="btn-unlock-master" id="btnTeacherMasterUnlock" onclick="app.teacherToggleUnlock()">
+              🔓 Liberar Gabarito e Explicações Agora
+            </button>
+            <button class="btn-secondary" onclick="app.teacherSimulateClass()">
+              👥 Simular 12 Alunos
+            </button>
+            <button class="btn-secondary" onclick="app.teacherResetSession()" style="color: var(--danger);">
+              🗑️ Reiniciar Sala
+            </button>
+          </div>
+        </div>
+
+        <!-- Indicadores da Sala -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon" style="background: var(--primary-light); color: var(--primary);">👥</div>
+            <div class="metric-details">
+              <div class="val" id="tStatRegistered">0</div>
+              <div class="lbl">Alunos Cadastrados</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon hits">✓</div>
+            <div class="metric-details">
+              <div class="val" id="tStatCompleted">0</div>
+              <div class="lbl">Provas Finalizadas</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon percent">%</div>
+            <div class="metric-details">
+              <div class="val" id="tStatAverage">0.0</div>
+              <div class="lbl">Média da Turma (de 20)</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon" style="background: var(--accent-light); color: var(--secondary);">🌐</div>
+            <div class="metric-details">
+              <div class="val" id="tStatRate">0%</div>
+              <div class="lbl">Aproveitamento Médio</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráficos Diagnósticos da Turma -->
+        <div class="charts-section" style="margin-top: 1.5rem;">
+          <div class="chart-card">
+            <h3>📈 Taxa de Acerto por Questão (Item 1 ao 20)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Identifique rapidamente quais itens tiveram maior taxa de erro para reforço em aula.
+            </p>
+            <div class="chart-canvas-container" style="height: 280px;">
+              <canvas id="chartTeacherItemRates"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3>📊 Distribuição de Notas da Turma</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Distribuição de notas dos alunos por faixas de pontuação.
+            </p>
+            <div class="chart-canvas-container" style="height: 280px;">
+              <canvas id="chartTeacherDistribution"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela com Resumo de Todos os Alunos -->
+        <div style="margin-top: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1.2rem; color: var(--primary);">📋 Desempenho Individual dos Estudantes</h3>
+            <button class="btn-secondary" onclick="app.exportStudentsCSV()">
+              📥 Exportar Relatório (CSV)
+            </button>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Estudante</th>
+                  <th>Turma</th>
+                  <th>Status</th>
+                  <th>Acertos</th>
+                  <th>Erros</th>
+                  <th>Nota (0-20)</th>
+                  <th>%</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="teacherStudentsTableBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                    Nenhum aluno cadastrado no momento.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================
+       MODAL: CONFIRMAÇÃO DE ENTREGA DA PROVA
+       =================================================================== -->
+  <div class="modal-overlay" id="confirmSubmitModal">
+    <div class="modal-box">
+      <h3 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.3rem;">
+        Confirmar Entrega da Avaliação?
+      </h3>
+      <p id="confirmSubmitMsg" style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1.25rem;">
+        Você respondeu todas as 20 questões. Tem certeza de que deseja finalizar?
+      </p>
+
+      <div id="unansweredWarningBox" style="display: none; background: var(--warning-bg); border-left: 4px solid var(--warning); padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.9rem; color: #78350f;">
+        <!-- Alerta de questões sem resposta -->
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="app.closeSubmitConfirmModal()">
+          Voltar e Revisar
+        </button>
+        <button class="btn-finish" onclick="app.confirmAndSubmitQuiz()">
+          Sim, Entregar Prova
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       MODAL: ACESSO DO PROFESSOR (PIN)
+       =================================================================== -->
+  <div class="modal-overlay" id="teacherPinModal">
+    <div class="modal-box">
+      <h3 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.3rem;">
+        Área do Instrutor / Professor
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.25rem;">
+        Digite o PIN de acesso pedagógico para monitorar a turma e liberar os resultados.
+      </p>
+
+      <div class="form-group">
+        <label for="teacherPinInput">PIN de Acesso:</label>
+        <input type="password" id="teacherPinInput" class="form-input" placeholder="Padrão: senai123" value="senai123">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="app.closeTeacherPinModal()">
+          Cancelar
+        </button>
+        <button class="btn-primary" style="width: auto;" onclick="app.verifyTeacherPin()">
+          Entrar no Painel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       MODAL: DETALHES DO ALUNO (PAINEL DO PROFESSOR)
+       =================================================================== -->
+  <div class="modal-overlay" id="studentDetailModal">
+    <div class="modal-box" style="max-width: 650px; max-height: 85vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div>
+          <h3 style="color: var(--primary); font-size: 1.25rem;" id="modalStudentName">Nome do Aluno</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;" id="modalStudentTurma">Turma</p>
+        </div>
+        <button class="btn-secondary" style="padding: 0.3rem 0.6rem;" onclick="app.closeStudentDetailModal()">✕ Fechar</button>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+        <div style="flex: 1; background: var(--success-bg); border: 1px solid var(--success-border); padding: 0.75rem; border-radius: 6px; text-align: center;">
+          <div style="font-size: 1.4rem; font-weight: 800; color: var(--success);" id="modalStudentScore">0/20</div>
+          <div style="font-size: 0.75rem; color: #065f46; font-weight: 600;">ACERTOS</div>
+        </div>
+        <div style="flex: 1; background: var(--accent-light); padding: 0.75rem; border-radius: 6px; text-align: center;">
+          <div style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="modalStudentPct">0%</div>
+          <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">APROVEITAMENTO</div>
+        </div>
+      </div>
+
+      <h4 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 0.75rem;">Gabarito Questão a Questão:</h4>
+      <div id="modalStudentAnswersGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem;">
+        <!-- Preenchido via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       RODAPÉ
+       =================================================================== -->
+  <footer class="app-footer">
+    <p>
+      <strong>SAEP ROTA</strong> &bull; Sistema de Avaliação da Educação Profissional &bull; Metodologia SENAI
+    </p>
+    <p style="margin-top: 0.3rem; font-size: 0.8rem; opacity: 0.8;">
+      Desenvolvimento Web &amp; Folhas de Estilo (CSS) &bull; 20 Itens Formativos
+    </p>
+  </footer>
+
+  <!-- Carrega a Base de Questões (disponível tanto no frontend quanto no backend) -->
+  <script src="questions.js"></script>
+
+  <!-- Lógica Principal do Aplicativo -->
+  <script src="app.js"></script>
+</body>
+</html>
