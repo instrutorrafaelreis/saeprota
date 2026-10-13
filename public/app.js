@@ -412,6 +412,8 @@ class SaepApp {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             studentId: this.student.id,
+            studentName: this.student.name,
+            studentTurma: this.student.turma,
             answers: this.answers
           })
         });

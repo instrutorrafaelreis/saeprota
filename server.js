@@ -194,10 +194,19 @@ app.post('/api/students/register', (req, res) => {
 // Submissão das respostas do aluno
 app.post('/api/students/submit', (req, res) => {
   const { studentId, answers } = req.body;
-  const student = sessionState.students.find(s => s.id === studentId);
+  let student = sessionState.students.find(s => s.id === studentId);
 
   if (!student) {
-    return res.status(404).json({ error: 'Aluno não encontrado' });
+    // Se a instância serverless reiniciou ou escalou, recupera o estudante com os dados da requisição
+    student = {
+      id: studentId || ('ALU-' + Math.random().toString(36).substring(2, 9)),
+      name: req.body.studentName || 'Estudante',
+      turma: req.body.studentTurma || 'Geral',
+      registeredAt: new Date().toISOString(),
+      completed: false,
+      answers: {}
+    };
+    sessionState.students.push(student);
   }
 
   // Se já finalizou, apenas retorna
